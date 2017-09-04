@@ -1,0 +1,20 @@
+SETTING UP A RASPBERRY PI AS AN ACCESS POINT IN A STANDALONE NETWORK
+[https://www.raspberrypi.org/documentation/configuration/wireless/access-point.md]
+This tutorial walks through how to set up a Raspberry Pi as a stand-alone access
+point to cut out the need to hook the hub up to a router. This may be useful for
+development and for deployment. We could incorporate both functionality, assuming
+the Raspberry Pi would have limited range, to allow more options for users.
+
+ESPRESSIF - GETTING STARTED WITH THE ESP8266
+[https://espressif.com/en/support/explore/get-started/esp8266/getting-started-guide]
+This guide goes over the ESP8266 wifi chip and give information on how it works
+and how to use it/set it up. 
+
+ADAFRUIT - WHY MQTT?
+[https://learn.adafruit.com/mqtt-adafruit-io-and-you/why-mqtt]
+This is a good intro guide on the MQTT protocol and why people use it.
+
+MQTT
+[http://mqtt.org]
+The official source website for MQTT. This has everything from implementation
+guides to tutorials to documentation to example projects.

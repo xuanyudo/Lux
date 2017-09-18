@@ -1,0 +1,10 @@
+{ "1234567890":
+  {
+    "Group": "kitchen",
+    "Device": "kitchen_1",
+    "IP": "120.84.1465",
+    "Status": "1",
+    "level": "5",
+    "Command": "light_on"
+    }
+}

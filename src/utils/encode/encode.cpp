@@ -2,53 +2,42 @@
 using namespace std;
 
 /*
+*encode.cpp creates a JSON file with inputs from user. User must input a serial number, and a specific command
+for this to work.
+*Specific command has its assign value:
+Command "on" will have device name, ip address, light status and light level.
+*If the user did not assign value to a specific command, the JSON will output something empty.
 
 */
-Encode::Encode(std::string jfile){
-  this->file_name = jfile;
-  this->info_name.serial_num = "Serial";
-  this->info_name.group_name = "Group";
-  this->info_name.device_name = "Device";
-  this->info_name.ip_address = "IP";
-  this->info_name.light_status = "Status";
-  this->info_name.light_level = "Level";
-  this->info_name.command = "Command";
+Encode::Encode(){
 };
-void Encode::stringfy(){
-  ofstream json;
-  json.open(file_name);
-  json<<"{ "<<'"'<<info_name.serial_num<<'"'<<':'<<'"'<<info.serial<<'"'<<endl;
-  json<<"\t"<<'{'<<endl;
-  json<<"\t\t"<<'"'<<info_name.command<<'"'<<": "<<'"'<<info.command_s<<'"'<<endl;
-  json<<"\t\t"<<'{'<<endl;
-  if(info.command_s == "on"){
-    json<<"\t\t\t"<<'"'<<info_name.device_name<<'"'<<": "<<'"'<<info.device<<'"'<<','<<endl;
-    json<<"\t\t\t"<<'"'<<info_name.ip_address<<'"'<<": "<<'"'<<info.ip<<'"'<<','<<endl;
-    json<<"\t\t\t"<<'"'<<info_name.light_status<<'"'<<": "<<'"'<<info.status<<'"'<<','<<endl;
-    json<<"\t\t\t"<<'"'<<info_name.light_level<<'"'<<": "<<'"'<<info.level<<'"'<<','<<endl;
+string Encode::stringfy(){
+  string json;
+  json = "{\"cmd\":"+this->command+",\"uuid\":"+to_string(this->uuid)+",\"Serial\":"+this->serial+",\"data\":{";
+  if(this->command == "on"){
+     json += "\"Device\":"+info.device+",\"IP\":"+info.ip+",\"light_status\":"+to_string(info.status)+",\"light_level\":"+to_string(info.level);
   }
-  else if(info.command_s == "off"){
-    json<<"\t\t\t"<<'"'<<info_name.device_name<<'"'<<": "<<'"'<<info.device<<'"'<<','<<endl;
-    json<<"\t\t\t"<<'"'<<info_name.ip_address<<'"'<<": "<<'"'<<info.ip<<'"'<<','<<endl;
-    json<<"\t\t\t"<<'"'<<info_name.light_status<<'"'<<": "<<'"'<<info.status<<'"'<<','<<endl;
-    json<<"\t\t\t"<<'"'<<info_name.light_level<<'"'<<": "<<'"'<<info.level<<'"'<<','<<endl;
+  else if(this->command == "off"){
+     json += "\"Device\":"+info.device+",\"IP\":"+info.ip+",\"light_status\":"+to_string(info.status)+",\"light_level\":"+to_string(info.level);
   }
-  else if(info.command_s == "test"){
-    json<<"\t\t\t"<<'"'<<info_name.ip_address<<'"'<<": "<<'"'<<info.ip<<'"'<<','<<endl;
+  else if(this->command == "test"){
+    json += "\"IP\":"+info.ip;
   }
-  else if(info.command_s == "status"){
-    json<<"\t\t\t"<<'"'<<info_name.device_name<<'"'<<": "<<'"'<<info.device<<'"'<<','<<endl;
-    json<<"\t\t\t"<<'"'<<info_name.ip_address<<'"'<<": "<<'"'<<info.ip<<'"'<<','<<endl;
-    json<<"\t\t\t"<<'"'<<info_name.light_status<<'"'<<": "<<'"'<<info.status<<'"'<<','<<endl;
-    json<<"\t\t\t"<<'"'<<info_name.light_level<<'"'<<": "<<'"'<<info.level<<'"'<<','<<endl;
-    json<<"\t\t\t"<<'"'<<info_name.group_name<<'"'<<": "<<'"'<<info.group<<'"'<<','<<endl;
+  else if(this->command == "status"){
+    json += "\"Device\":"+info.device+",\"IP\":"+info.ip+",\"light_status\":"+to_string(info.status)+",\"light_level\":"+to_string(info.level)+",\"Group\":"+info.group;
   }
-  else if(info.command_s == "exit"){
-    json<<"\t\t\t"<<'"'<<info_name.ip_address<<'"'<<": "<<'"'<<info.ip<<'"'<<','<<endl;
+  else if(this->command == "exit"){
+    json += "\"IP\":"+info.ip;
   }
-  json<<"\t\t"<<'}'<<endl;
-  json<<"\t"<<'}'<<endl;
-  json<<'}'<<endl;
+  else{
+    json = "{\"cmd\":INVALID}";
+    return json;
+  }
+  json += "}}";
+  return json;
+}
+void Encode::setUuid(int id){
+  this->uuid = id;
 }
 void Encode::setIP(string newIP){
   this->info.ip = newIP;
@@ -66,8 +55,8 @@ void Encode::setDeviceName(string newDeviceN){
   this->info.device = newDeviceN;
 }
 void Encode::setCommand(string command_string){
-  this->info.command_s = command_string;
+  this->command = command_string;
 }
 void Encode::setSerialN(string serial_input){
-  this->info.serial = serial_input;
+  this->serial = serial_input;
 }

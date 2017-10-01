@@ -6,101 +6,68 @@ Parser::Parser accepts a file name and extracts the entire file into a string.
 After getting a single string of information, it stringstream it into a struct of data_name
 and its data in order.
 */
-Parser::Parser(std::string jfile){
-  ifstream file;                          //Basic file reading start
-  file.open(jfile);
-  int count = 0;
-  char fchar;
-  string sdata = "";                      //Single string that contains all data and data_name
-  while(!file.eof()){                     //While loop to extract charcters only within " "
-    fchar = file.get();
-    if(fchar == '"' && count == 0){
-      count = 1;
+Parser::Parser(std::string json){
+  string data = "";
+  int counter = 0;
+  for(int i = 0;i<json.length();i++){
+    char c =json[i];
+    if(counter == 0 && (c == ':' || c == '"')){
+      counter = 1;
     }
-    else if(fchar == '"' && count == 1){
-      count = 0;
-      sdata = sdata + ' ';
+    else if(counter == 1 && (c == ',' || c == '"' || c == '{' || c == '}')){
+      counter = 0;
+      data = data + ' ';
     }
-    if(count == 1 && fchar!='"'){
-      sdata = sdata + fchar;
+    if(counter == 1 && (c!=':'&& c!='"')){
+      data = data + c;
     }
-  };                                      //Basic file reading end
-  stringstream insert_data(sdata);        //Assigning data to their own field
-  string input;
-  while(insert_data>>input){
-    if(input == "Serial"){
-      this->info_name.serial_num = input;
-      insert_data>>input;
-      this->info.serial = input;
+  };
+  counter = 0;
+  stringstream streamD(data);
+  string dataI;
+  string dataIN;
+  while(streamD>>dataI){
+    if(counter == 0 && dataI != "data"){
+      dataIN = dataI;
+      counter = 1;
     }
-    else if(input == "Command"){
-      this->info_name.command = input;
-      insert_data>>input;
-      this->info.command_s = input;
+    else if(counter == 1){
+      this->dataMap[dataIN] = dataI;
+      counter = 0;
     }
-    else if(input == "Group"){
-      this->info_name.group_name = input;
-      insert_data>>input;
-      this->info.group = input;
-    }
-    else if(input == "Device"){
-      this->info_name.device_name = input;
-      insert_data>>input;
-      this->info.device = input;
-    }
-    else if (input == "IP"){
-      this->info_name.ip_address = input;
-      insert_data>>input;
-      this->info.ip = input;
-    }
-    else if (input == "Status"){
-      this->info_name.light_status = input;
-      int intput;
-      insert_data>>intput;
-      this->info.status = intput;
-    }
-    else if (input == "Level"){
-      this->info_name.light_level = input;
-      int intput;
-      insert_data>>intput;
-      this->info.level = intput;
-    }
-    else{cout<<"error"<<endl;}
   }
 };
 string Parser::getSerial()const{
-  return info.serial;
+  return this->dataMap.at("Serial");
 }
 string Parser::getCommand()const{
-  return info.command_s;
+  return this->dataMap.at("cmd");
 }
 int Parser::getLight_S()const{
-  return info.status;
+  int x = stoi(this->dataMap.at("light_status"));
+  return x;
 }
 int Parser::getLight_L()const{
-  return info.level;
+  int x = stoi(this->dataMap.at("light_level"));
+  return x;
+}
+int Parser::getUUID()const{
+  int x = stoi(this->dataMap.at("uuid"));
+  return x;
 }
 string Parser::getIP()const{
-  return info.ip;
+  return this->dataMap.at("IP");
 }
 string Parser::getGroupName()const{
-  return info.group;
+  return this->dataMap.at("Group");
 }
 string Parser::getDeviceName()const{
-  return info.device;
+  return this->dataMap.at("Device");
 }
-void Parser::setIP(string newIP){
-  this->info.ip = newIP;
-}
-void Parser::setLight_S(int newStatus){
-  this->info.status = newStatus;
-}
-void Parser::setLight_L(int newLevel){
-  this->info.level = newLevel;
-}
-void Parser::setGroupName(string newGroupN){
-  this->info.group = newGroupN;
-}
-void Parser::setDeviceName(string newDeviceN){
-  this->info.group = newDeviceN;
+bool Parser::getValidation()const{
+  string validation = this->dataMap.at("cmd");
+  if(validation == "INVALID"){
+    return false;
+  }
+  else{return true;}
 }

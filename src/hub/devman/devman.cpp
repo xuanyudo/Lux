@@ -39,6 +39,14 @@ string Device::getName() const {
 	return name;
 }
 
+int Device::getLightLevel() const {
+	return level;
+}
+
+void Device::setLightLevel(int level) {
+	this->level = level;
+}
+
 string Device::firmware_version() const {
 	return f_vers;
 }
@@ -53,6 +61,10 @@ void Device::set_f_vers(string f_vers) {
 
 void Device::set_h_vers(string h_vers) {
 	this->h_vers = h_vers;
+}
+
+string Device::toString() {
+	return to_string(id) + delim + ip + delim + name + delim + to_string(level) + delim + f_vers + delim + h_vers;
 }
 
 bool Device::operator ==(const Device dev) const {
@@ -181,7 +193,7 @@ void updateFile(string filename) {
 		for (list<Device*>::iterator dit = devs.begin(); dit != devs.end(); ++dit) {//print all devices in the group
 			Device* dev = *dit;
 			
-			file << "\t" << dev->getID() << delim << dev->getIP() << delim << dev->getName() << delim << dev->firmware_version() << delim << dev->hardware_version() << endl;
+			file << "\t" << dev->toString() << endl;
 			//    ID : IP : NAME : FV : HV
 		}
 	}
@@ -223,6 +235,7 @@ bool loadFile(string filename) {
 	DeviceGroup* grp;
 	
 	long id;
+	int level;
 	string ip, name, f_vers, h_vers;
 	
 	while(getline(file, line)) {
@@ -236,11 +249,13 @@ bool loadFile(string filename) {
 			id = atol(trim(data[0]).c_str());
 			ip = trim(data[1]);
 			name = trim(data[2]);
-			f_vers = trim(data[3]);
+			level = atoi(trim(data[3]).c_str());
+			f_vers = trim(data[4]);
 			h_vers = trim(line.substr(line.rfind(delim) + 1));
 			
 			Device* dev = new Device(id, ip, name);
 			
+			dev->setLightLevel(level);
 			dev->set_f_vers(f_vers);
 			dev->set_h_vers(h_vers);
 			

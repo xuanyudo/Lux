@@ -1,4 +1,4 @@
-#include "../devman.h"
+#include "../../src/hub/devman/devman.h"
 
 int main() {
 	///*
@@ -18,6 +18,8 @@ int main() {
 	DeviceGroup* grp2 = new DeviceGroup("TEST GROUP 2");
 	
 	Device* dev2 = new Device(99998, "192.168.1.2", "TEST DEVICE 2");
+	
+	dev2->setLightLevel(8);
 	
 	grp1->addDevice(dev2);
 	

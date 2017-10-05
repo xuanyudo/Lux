@@ -14,6 +14,7 @@ using namespace std;
 class Device {
 	private:
 		long id;
+		int level;
 		string ip, name, f_vers, h_vers;
 	public:
 		Device(long, string, string);
@@ -21,10 +22,13 @@ class Device {
 		long getID() const;
 		string getIP() const;
 		string getName() const;
+		int getLightLevel() const;
+		void setLightLevel(int level);
 		string firmware_version() const;
 		string hardware_version() const;
 		void set_f_vers(string);
 		void set_h_vers(string);
+		string toString();
 		bool operator ==(const Device) const;//compares id, ip, name
 };
 

@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 	
 	while(true) {
 		string s;
-		cin >> s;
+		getline(cin, s);
 		
 		server_send(client_fd_by_ip("192.168.1.3"), s);
 	}

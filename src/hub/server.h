@@ -18,6 +18,7 @@
 #define PORT 8080
 #define LISTEN_QUEUE_SIZE 5
 #define MESSAGE_SIZE 1024
+#define REG_KEY "e7Cv2ro_8K"
 
 using namespace std;
 

@@ -6,8 +6,9 @@ bool running = false;
 cmd_map server_commands;
 map<string, int> by_ip;
 
-set<int> status_wait;//for responses to status requests
+set<int> status_wait;//<web client fd> for responses to status requests
 map<int, int> upd_wait;//<device fd, web client fd> for responses to update requests
+set<string> conn_devs;//<serial #>
 
 pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
@@ -72,13 +73,6 @@ void server_start() {
 		cerr << "Failed to create \"acc_dev\" thread." << endl;
 		return;
 	}
-	
-	/*err = pthread_join(acc_dev, NULL);
-	
-	if (err != 0) {
-		cerr << "Failed to join \"acc_dev\" thread." << endl;
-		//return;
-	}*/
 }
 
 int server_connections() {
@@ -165,28 +159,8 @@ void* accept_devices(void* c_addr) {
 			cerr << "Failed to create \"dev_rc\" thread for device at IP: " << ip << endl;
 			pthread_exit(0);
 		}
-	
-		/*err = pthread_join(dev_rc, NULL);
-	
-		if (err != 0) {
-			cerr << "Failed to join \"dev_rc\" thread for device at IP: " << ip << endl;
-			pthread_exit(0);
-		}*/
 	}
 }
-
-/*
-list<string> split(string line, char delimiter){
-    list<string> pieces;
-	string save = string(line);
-    int pos = 0;
-    while ((pos = save.find(delimiter)) != string::npos) {
-        pieces.push_back(save.substr(0, pos));
-        save.erase(0, pos + 1);
-    }
-    return pieces;
-}
-*/
 
 void* read_client(void* c_fd_p) {
 	int c_fd = *(int*) c_fd_p;
@@ -204,11 +178,13 @@ void* read_client(void* c_fd_p) {
 			client_exit(c_fd, "");
 		}
 		
-		Parser* p = new Parser(s_msg);
+		string key = s_msg;
 		
-		string key = p->getCommand();//grab command type from JSON
+		//Parser* p = new Parser(s_msg);
 		
-		delete(p);
+		//string key = p->getCommand();//grab command type from JSON
+		
+		//delete(p);
 		
 		if (server_commands.count(key) == 0) {
 			pthread_mutex_lock(&mtx);
@@ -231,8 +207,6 @@ void send_exit_ack(int c_fd) {
 	
 	e->setCommand("exit_ack");
 	
-	//TODO what information is required?
-	
 	server_send(c_fd, e->stringfy());
 	
 	delete(e);
@@ -243,8 +217,6 @@ void send_status_ack(int c_fd) {
 	
 	e->setCommand("status_ack");
 	
-	//TODO what information is required?
-	
 	server_send(c_fd, e->stringfy());
 	
 	delete(e);
@@ -254,8 +226,6 @@ void send_upd_ack(int c_fd) {
 	Encode* e = new Encode();
 	
 	e->setCommand("update_ack");
-	
-	//TODO what information is required?
 	
 	server_send(c_fd, e->stringfy());
 	
@@ -303,6 +273,8 @@ void client_test(int c_fd, string msg) {
 void client_register(int c_fd, string msg) {
 	Parser* p = new Parser(msg);
 	
+	//TODO get reg_key, compare to REG_KEY in server.h, if equal, add to conn_devs
+	
 	string d_name = p->getDeviceName();
 	
 	if (!isValidName(d_name)) {
@@ -325,7 +297,7 @@ void client_register(int c_fd, string msg) {
 	}
 	
 	DeviceGroup* g;
-	
+
 	if (grps_n.count(g_name) == 0) {//no group by that name exists
 		g = new DeviceGroup(g_name);
 	} else {
@@ -471,15 +443,18 @@ void client_status_req(int c_fd, string msg) {
 				e->setIP(d->getIP());
 				e->setLight_L(d->getLightLevel());
 				e->setUuid(d->getID());
+				//TODO add f_vers, h_vers
 			
 				server_send(c_fd, e->stringfy());
+				
+				delete(e);
 				
 				//wait for status_ack
 				pthread_mutex_lock(&mtx);
 				status_wait.insert(c_fd);
 				pthread_mutex_unlock(&mtx);
 			
-			    bool rcvd = false;
+			    bool rcvd = false;//TODO implement timeout
 				
 				while(!rcvd) {
 					pthread_mutex_lock(&mtx);
@@ -488,6 +463,8 @@ void client_status_req(int c_fd, string msg) {
 				}
 			}
 		}
+		
+		_exit(0);//exit child
 		
 	}//parent goes back to reading the client
 }

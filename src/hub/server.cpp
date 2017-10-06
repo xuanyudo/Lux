@@ -4,6 +4,10 @@ int sockfd;
 bool running = false;
 
 cmd_map server_commands;
+
+map<int, long> fds;//<fd, uuid>
+map<long, int> uuids;//<uuid, fd>
+
 map<string, int> by_ip;
 
 set<int> status_wait;//<web client fd> for responses to status requests
@@ -75,12 +79,38 @@ void server_start() {
 	}
 }
 
+//BEGIN GETTERS
+
 int server_connections() {
 	pthread_mutex_lock(&mtx);
-	int size = by_ip.size();
+	int size = fds.size();
 	pthread_mutex_unlock(&mtx);
 	
 	return size;
+}
+
+long client_uuid_by_fd(int fd) {
+	pthread_mutex_lock(&mtx);
+	if (fds.count(fd) == 0) {
+		return -1;
+	}
+	
+	int uuid = fds[fd];
+	pthread_mutex_unlock(&mtx);
+	
+	return uuid;
+}
+
+int client_fd_by_uuid(long uuid) {
+	pthread_mutex_lock(&mtx);
+	if (uuids.count(uuid) == 0) {
+		return -1;
+	}
+	
+	int fd = uuids[uuid];
+	pthread_mutex_unlock(&mtx);
+	
+	return fd;
 }
 
 int client_fd_by_ip(string ip) {
@@ -105,6 +135,8 @@ string client_ip_by_fd(int fd) {
 	
 	return inet_ntoa(addr.sin_addr);
 }
+
+//END GETTERS
 
 void server_send(int c_fd, string msg) {
 	if (!running) {
@@ -178,13 +210,20 @@ void* read_client(void* c_fd_p) {
 			client_exit(c_fd, "");
 		}
 		
-		string key = s_msg;
+		//TODO BEGIN TEMP
+		server_send(4, "4|anything");
+		server_send(4, "6|" + s_msg);
 		
-		//Parser* p = new Parser(s_msg);
+		cout << "s_msg" << endl;
 		
-		//string key = p->getCommand();//grab command type from JSON
+		continue;
+		//TODO END TEMP
 		
-		//delete(p);
+		Parser* p = new Parser(s_msg);
+		
+		string key = p->getCommand();//grab command type from JSON
+		
+		delete(p);
 		
 		if (server_commands.count(key) == 0) {
 			pthread_mutex_lock(&mtx);
@@ -238,7 +277,7 @@ void send_status_req(int c_fd) {
 	Encode* e = new Encode();
 	
 	e->setCommand("status_request");
-	e->setUuid(c_fd);
+	e->setUuid(fds[c_fd]);
 	
 	//TODO what information is required?
 	
@@ -257,6 +296,8 @@ void client_exit(int c_fd, string msg) {
 		return;
 	}
 	
+	uuids.erase(fds[c_fd]);
+	fds.erase(c_fd);
 	by_ip.erase(ip);//if ip exists in the map
 	
 	send_exit_ack(c_fd);
@@ -410,8 +451,9 @@ void client_upd_req(int c_fd, string msg) {
 	Encode* e = new Encode();
 	
 	e->setCommand("update");
+	e->setUuid(id);
 	
-	server_send(id, e->stringfy());
+	server_send(uuids[id], e->stringfy());
 	
 	upd_wait.insert(pair<int, int>(id, c_fd));
 	
@@ -469,6 +511,7 @@ void client_status_req(int c_fd, string msg) {
 	}//parent goes back to reading the client
 }
 
+//this is still a command for us
 void client_status_ack(int c_fd, string msg) {
 	pthread_mutex_lock(&mtx);
 	if (status_wait.count(c_fd) > 0) {

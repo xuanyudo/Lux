@@ -27,9 +27,9 @@ int main(int argc, char* argv[]) {
 	
 	while(true) {
 		string s;
-		getline(cin, s);
+		cin >> s;
 		
-		server_send(client_fd_by_ip("192.168.1.3"), s);
+		server_send(4, s);//first connection is always fd=4
 	}
 	
 	cout << "Terminated." << endl;

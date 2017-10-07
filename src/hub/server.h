@@ -7,6 +7,7 @@
 #include <map>
 #include <list>
 #include <set>
+#include <pthread.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -29,8 +30,14 @@ extern cmd_map server_commands;//add/remove from this to change the server respo
 
 void server_start();//starts the server, allowing clients to be connected
 int server_connections();//# of connections to this server
-int client_fd_by_ip(string ip);//-1 if not found
+
+//-1 if not found
+long client_uuid_by_fd(int fd);
+int client_fd_by_uuid(long uuid);
+int client_fd_by_ip(string ip);
+
 string client_ip_by_fd(int fd);//empty string if not found
+
 void server_send(int client_fd, string message);//sends the message to the client at client_fd
 
 #endif //LUX_SERVER_H

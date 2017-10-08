@@ -11,6 +11,7 @@
 #define TEST 10
 
 #include <stdio.h>
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <map>

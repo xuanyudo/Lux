@@ -13,13 +13,13 @@ using namespace std;
 
 class Device {
 	private:
-		long id;
+		string uuid;
 		int level;
 		string ip, name, f_vers, h_vers;
 	public:
-		Device(long, string, string);
+		Device(string, string, string);//uuid, ip, name
 		~Device();
-		long getID() const;
+		string getUUID() const;
 		string getIP() const;
 		string getName() const;
 		int getLightLevel() const;
@@ -48,11 +48,11 @@ class DeviceGroup {
 };
 
 extern map<string, DeviceGroup*> grps_n;
-extern map<long, Device*> devs_id;
+extern map<string, Device*> devs_id;
 extern map<string, Device*> devs_ip;
 extern map<string, Device*> devs_n;
 
-Device byID(long);
+Device byUUID(string);
 Device byIP(string);
 Device byName(string);
 

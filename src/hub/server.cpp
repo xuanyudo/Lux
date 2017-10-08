@@ -5,13 +5,12 @@ bool running = false;
 
 cmd_map server_commands;
 
-map<int, long> fds;//<fd, uuid>
-map<long, int> uuids;//<uuid, fd>
+map<int, string> fds;//<fd, uuid>
+map<string, int> uuids;//<uuid, fd>
 
 map<string, int> by_ip;
 
 set<int> status_wait;//<web client fd> for responses to status requests
-map<int, int> upd_wait;//<device fd, web client fd> for responses to update requests
 set<string> conn_devs;//<serial #>
 
 pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -30,21 +29,22 @@ void client_status(int client_fd, string message);
 void client_unregister(int client_fd, string message);
 void client_upd_req(int client_fd, string message);
 void client_status_req(int client_fd, string message);
-void client_status_ack(int client_fd, string message);
 
 void server_start() {
 	//Client->Server
-	server_commands["exit"] = client_exit;
-	server_commands["test"] = client_test;
-	server_commands["register"] = client_register;
-	server_commands["connect"] = client_connect;
-	server_commands["status"] = client_status;
+	server_commands[DISCONNECT_REQUEST] = client_exit;
+	server_commands[DISCONNECT] = client_exit;
+	server_commands[FORCE_DISCONNECT] = client_exit;//TODO these should be different
+	
+	server_commands[TEST] = client_test;
+	server_commands[REGISTER] = client_register;
+	server_commands[CONNECT] = client_connect;
+	server_commands[STATUS] = client_status;
 	
 	//Web Client->Server
-	server_commands["unregister"] = client_unregister;
-	server_commands["update_request"] = client_upd_req;
-	server_commands["status_request"] = client_status_req;
-	server_commands["status_ack"] = client_status_ack;
+	server_commands[UNREGISTER] = client_unregister;
+	server_commands[UPDATE_REQUEST] = client_upd_req;
+	server_commands[STATUS_REQUEST] = client_status_req;
 	
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
@@ -89,19 +89,7 @@ int server_connections() {
 	return size;
 }
 
-long client_uuid_by_fd(int fd) {
-	pthread_mutex_lock(&mtx);
-	if (fds.count(fd) == 0) {
-		return -1;
-	}
-	
-	int uuid = fds[fd];
-	pthread_mutex_unlock(&mtx);
-	
-	return uuid;
-}
-
-int client_fd_by_uuid(long uuid) {
+int client_fd_by_uuid(string uuid) {
 	pthread_mutex_lock(&mtx);
 	if (uuids.count(uuid) == 0) {
 		return -1;
@@ -123,6 +111,18 @@ int client_fd_by_ip(string ip) {
 	pthread_mutex_unlock(&mtx);
 	
 	return fd;
+}
+
+string client_uuid_by_fd(int fd) {
+	pthread_mutex_lock(&mtx);
+	if (fds.count(fd) == 0) {
+		return "";
+	}
+	
+	string uuid = fds[fd];
+	pthread_mutex_unlock(&mtx);
+	
+	return uuid;
 }
 
 string client_ip_by_fd(int fd) {
@@ -210,80 +210,28 @@ void* read_client(void* c_fd_p) {
 			client_exit(c_fd, "");
 		}
 		
-		//TODO BEGIN TEMP
-		server_send(4, "4|anything");
-		server_send(4, "6|" + s_msg);
+		Json* json = new Json(s_msg);
 		
-		cout << "s_msg" << endl;
+		int cmd = json->cmd;//grab command type from JSON
 		
-		continue;
-		//TODO END TEMP
+		delete(json);
 		
-		Parser* p = new Parser(s_msg);
-		
-		string key = p->getCommand();//grab command type from JSON
-		
-		delete(p);
-		
-		if (server_commands.count(key) == 0) {
-			pthread_mutex_lock(&mtx);
-			cout << "[Device " << c_fd << "]" << s_msg << endl;
-			pthread_mutex_unlock(&mtx);
-		} else {
-			pthread_mutex_lock(&mtx);
-			cout << "Device " << c_fd << " ran command: " << key << endl;
-			pthread_mutex_unlock(&mtx);
+		pthread_mutex_lock(&mtx);
+		cout << "Device " << c_fd << " ran command: " << cmd << endl;
+		pthread_mutex_unlock(&mtx);
 			
-			server_commands.find(key)->second(c_fd, s_msg);//must be the last thing to happen as sometimes the thread is killed
-		}
+		server_commands.find(cmd)->second(c_fd, s_msg);//must be the last thing to happen as sometimes the thread is killed
 	}
-}
-
-//ACKNOWLEDGEMENTS:
-
-void send_exit_ack(int c_fd) {
-	Encode* e = new Encode();
-	
-	e->setCommand("exit_ack");
-	
-	server_send(c_fd, e->stringfy());
-	
-	delete(e);
-}
-
-void send_status_ack(int c_fd) {
-	Encode* e = new Encode();
-	
-	e->setCommand("status_ack");
-	
-	server_send(c_fd, e->stringfy());
-	
-	delete(e);
-}
-
-void send_upd_ack(int c_fd) {
-	Encode* e = new Encode();
-	
-	e->setCommand("update_ack");
-	
-	server_send(c_fd, e->stringfy());
-	
-	delete(e);
 }
 
 //REQUESTS:
 
 void send_status_req(int c_fd) {
-	Encode* e = new Encode();
+	Json* json = new Json(STATUS_REQUEST, client_uuid_by_fd(c_fd), REG_KEY);
 	
-	e->setCommand("status_request");
-	e->setUuid(fds[c_fd]);
+	server_send(c_fd, json->jsonify());
 	
-	//TODO what information is required?
-	
-	server_send(c_fd, e->stringfy());
-	
-	delete(e);
+	delete(json);
 }
 
 //RESPONSES:
@@ -296,11 +244,9 @@ void client_exit(int c_fd, string msg) {
 		return;
 	}
 	
-	uuids.erase(fds[c_fd]);
+	uuids.erase(client_uuid_by_fd(c_fd));
 	fds.erase(c_fd);
 	by_ip.erase(ip);//if ip exists in the map
-	
-	send_exit_ack(c_fd);
 	
 	cout << "Device " << c_fd << " (" << ip << ") disconnected." << endl;
 	pthread_exit(0);
@@ -312,27 +258,27 @@ void client_test(int c_fd, string msg) {
 }
 
 void client_register(int c_fd, string msg) {
-	Parser* p = new Parser(msg);
+	Json* json = new Json(msg);
 	
 	//TODO get reg_key, compare to REG_KEY in server.h, if equal, add to conn_devs
 	
-	string d_name = p->getDeviceName();
+	string d_name = json->data["name"];
 	
 	if (!isValidName(d_name)) {
 		cerr << "Invalid device name: " << d_name << endl;
-		delete(p);
+		delete(json);
 		return;
 	}
 	
-	Device* d = new Device(p->getUUID(), p->getIP(), d_name);
+	Device* d = new Device(json->uuid, client_ip_by_fd(c_fd), d_name);
 	
 	//TODO any information sent in this message must be added to the device here
 	
-	string g_name = p->getGroupName();
+	string g_name = "all";//TODO every device will be stored in the all group for now
 	
 	if (!isValidGroupName(g_name)) {
 		cerr << "Invalid group name: " << g_name << endl;
-		delete(p);
+		delete(json);
 		delete(d);
 		return;
 	}
@@ -354,75 +300,63 @@ void client_register(int c_fd, string msg) {
 }
 
 void client_connect(int c_fd, string msg) {
-	Parser* p = new Parser(msg);
+	Json* json = new Json(msg);
 	
-	string d_name = p->getDeviceName();
+	string d_name = json->data["name"];
 	
 	if (!isValidName(d_name)) {
 		cerr << "Invalid device name: " << d_name << endl;
-		delete(p);
+		delete(json);
 		return;
 	}
 	
-	Device d = byID(p->getUUID());
+	Device d = byUUID(json->uuid);
 	
 	//TODO the client should automatically connect due to accept_devices
 	
 	send_status_req(c_fd);
 	
-	delete(p);
+	delete(json);
 }
 
 void client_status(int c_fd, string msg) {
-	Parser* p = new Parser(msg);
+	Json* json = new Json(msg);
 	
-	int id = p->getUUID();
+	string uuid = json->uuid;
 	
 	//TODO change group if it's different
 	
-	Device d = byID(id);
-	
-	int wc_fd = -1;
-	bool rtrv = upd_wait.count(id) > 0;
-	
-	if (rtrv) {
-		wc_fd = upd_wait[id];
-		upd_wait.erase(id);
-	}
+	Device d = byUUID(uuid);
 	
 	//TODO set necessary information in the Device class
 	
-	send_status_ack(c_fd);
-	
-	if (rtrv) {
-		send_upd_ack(wc_fd);
-	}
-	
-	delete(p);
+	delete(json);
 }
 
 void client_unregister(int c_fd, string msg) {
-	Parser* p = new Parser(msg);
+	Json* json = new Json(msg);
 	
-	string d_name = p->getDeviceName();
+	string d_name = json->data["name"];
 	
 	if (!isValidName(d_name)) {
 		cerr << "Invalid device name: " << d_name << endl;
 		return;
 	}
 	
-	Device* d = new Device(p->getUUID(), p->getIP(), d_name);
+	Device* d = new Device(json->uuid, client_ip_by_fd(c_fd), d_name);
 	
-	string g_name = p->getGroupName();
+	string g_name = "all";//TODO the only group currently is all
 	
 	if (!isValidGroupName(g_name)) {
 		cerr << "Invalid group name: " << g_name << endl;
+		delete(json);
 		delete(d);
 		return;
 	}
 	
 	if (grps_n.count(g_name) == 0) {//no group by that name exists
 		cerr << "Attempted to unregister a device (" << c_fd << ") from an invalid group." << endl;
+		delete(json);
 		delete(d);
 		return;
 	}
@@ -431,93 +365,55 @@ void client_unregister(int c_fd, string msg) {
 	
 	g.removeDevice(d);
 	
+	delete(json);
 	delete(d);
 }
 
 void client_upd_req(int c_fd, string msg) {
-	Parser* p = new Parser(msg);
+	Json* rcv_json = new Json(msg);
 	
-	string d_name = p->getDeviceName();
+	string d_name = rcv_json->data["name"];
 	
 	if (!isValidName(d_name)) {
 		cerr << "Invalid device name: " << d_name << endl;
 		return;
 	}
 	
-	int id = p->getUUID();
+	string uuid = rcv_json->uuid;
 	
-	Device* d = new Device(id, p->getIP(), d_name);
+	Device* d = new Device(uuid, client_ip_by_fd(c_fd), d_name);
 	
-	Encode* e = new Encode();
+	Json* snd_json = new Json(UPDATE, uuid, REG_KEY);
 	
-	e->setCommand("update");
-	e->setUuid(id);
+	server_send(client_fd_by_uuid(uuid), snd_json->jsonify());
 	
-	server_send(uuids[id], e->stringfy());
-	
-	upd_wait.insert(pair<int, int>(id, c_fd));
-	
-	delete(p);
+	delete(rcv_json);
 	delete(d);
-	delete(e);
+	delete(snd_json);
 }
 
 void client_status_req(int c_fd, string msg) {
-	pid_t pid = fork();
-	
-	if (pid == 0) {//child
+	for (map<string, DeviceGroup*>::iterator it = grps_n.begin(); it != grps_n.end(); ++it) {
+		string g_name = it->first;
+		DeviceGroup* g = it->second;
 		
-		for (map<string, DeviceGroup*>::iterator it = grps_n.begin(); it != grps_n.end(); ++it) {
-			string g_name = it->first;
-			DeviceGroup* g = it->second;
+		list<Device*> devs = g->getDevices();
 		
-			list<Device*> devs = g->getDevices();
-		
-			//send a status command for each device
-			for (list<Device*>::iterator dit = devs.begin(); dit != devs.end(); ++dit) {
-				Device* d = *dit;
+		//send a status command for each device
+		for (list<Device*>::iterator dit = devs.begin(); dit != devs.end(); ++dit) {
+			Device* d = *dit;
 			
-				Encode* e = new Encode();
-			
-				e->setCommand("status");
-				e->setGroupName(g_name);
-				e->setDeviceName(d->getName());
-				e->setIP(d->getIP());
-				e->setLight_L(d->getLightLevel());
-				e->setUuid(d->getID());
-				//TODO add f_vers, h_vers
-			
-				server_send(c_fd, e->stringfy());
+			Json* json = new Json(STATUS, d->getUUID(), REG_KEY);
 				
-				delete(e);
-				
-				//wait for status_ack
-				pthread_mutex_lock(&mtx);
-				status_wait.insert(c_fd);
-				pthread_mutex_unlock(&mtx);
+			json->data["name"] = d->getName();
+			json->data["group_name"] = g_name;
+			json->data["ip"] = d->getIP();
+			json->data["level"] = d->getLightLevel();
+			//TODO add f_vers, h_vers
 			
-			    bool rcvd = false;//TODO implement timeout
+			server_send(c_fd, json->jsonify());
 				
-				while(!rcvd) {
-					pthread_mutex_lock(&mtx);
-				    rcvd = status_wait.count(c_fd) == 0;//status received
-				    pthread_mutex_unlock(&mtx);
-				}
-			}
+			delete(json);
 		}
-		
-		_exit(0);//exit child
-		
-	}//parent goes back to reading the client
-}
-
-//this is still a command for us
-void client_status_ack(int c_fd, string msg) {
-	pthread_mutex_lock(&mtx);
-	if (status_wait.count(c_fd) > 0) {
-		status_wait.erase(c_fd);
-	} else {
-		cerr << "Client (" << c_fd << ") acknowledged nonexisting status command." << endl;
 	}
-	pthread_mutex_unlock(&mtx);
 }

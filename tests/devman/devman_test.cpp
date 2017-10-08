@@ -4,7 +4,7 @@ int main() {
 	///*
 	DeviceGroup* grp1 = new DeviceGroup("TEST GROUP 1");
 	
-	Device* dev1 = new Device(99999, "192.168.1.1", "TEST DEVICE 1");
+	Device* dev1 = new Device("abc123", "192.168.1.1", "TEST DEVICE 1");
 	
 	dev1->set_f_vers("F.VERS");
 	dev1->set_h_vers("H.VERS");
@@ -17,7 +17,7 @@ int main() {
 	
 	DeviceGroup* grp2 = new DeviceGroup("TEST GROUP 2");
 	
-	Device* dev2 = new Device(99998, "192.168.1.2", "TEST DEVICE 2");
+	Device* dev2 = new Device("def456", "192.168.1.2", "TEST DEVICE 2");
 	
 	dev2->setLightLevel(8);
 	
@@ -28,7 +28,7 @@ int main() {
 	string bad_name = "BAD/NAME*TEST_DEVICE#3";
 	
 	if (isValidName(bad_name)) {
-		Device* dev3 = new Device(99997, "192.168.1.3", bad_name);
+		Device* dev3 = new Device("ghi789", "192.168.1.3", bad_name);
 		
 		grp1->addDevice(dev3);
 	}
@@ -39,8 +39,7 @@ int main() {
 	///*
 	loadFile("devices.dat");
 	
-	//Device dev = byID(99999l);
-	//cout << dev.getID() << " : " << dev.getIP() << " : " << dev.getName() << endl;
+	//cout << dev.getUUID() << " : " << dev.getIP() << " : " << dev.getName() << endl;
 	
 	updateFile("devices.dat");
 	//*/

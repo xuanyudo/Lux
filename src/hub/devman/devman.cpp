@@ -4,7 +4,7 @@
 
 //BEGIN EXTERNAL DEFINITIONS
 map<string, DeviceGroup*> grps_n;
-map<long, Device*> devs_id;
+map<string, Device*> devs_id;
 map<string, Device*> devs_ip;
 map<string, Device*> devs_n;
 //END EXTERNAL DEFINITIONS
@@ -12,23 +12,23 @@ map<string, Device*> devs_n;
 char delim = '|';
 
 //BEGIN Device
-Device::Device(long id, string ip, string name) {
-	this->id = id;
+Device::Device(string uuid, string ip, string name) {
+	this->uuid = uuid;
 	this->ip = ip;
 	this->name = name;
 	
 	f_vers = "UNKNOWN";
 	h_vers = "UNKNOWN";
 	
-	devs_id.insert(pair<long, Device*>(this->id, this));
+	devs_id.insert(pair<string, Device*>(this->uuid, this));
 	devs_ip.insert(pair<string, Device*>(this->ip, this));
 	devs_n.insert(pair<string, Device*>(this->name, this));
 }
 
 Device::~Device(){}
 
-long Device::getID() const {
-	return id;
+string Device::getUUID() const {
+	return uuid;
 }
 
 string Device::getIP() const {
@@ -64,11 +64,11 @@ void Device::set_h_vers(string h_vers) {
 }
 
 string Device::toString() {
-	return to_string(id) + delim + ip + delim + name + delim + to_string(level) + delim + f_vers + delim + h_vers;
+	return uuid + delim + ip + delim + name + delim + to_string(level) + delim + f_vers + delim + h_vers;
 }
 
 bool Device::operator ==(const Device dev) const {
-	return dev.getID() == this->id && dev.getIP() == this->ip && dev.getName().compare(this->name) == 0;
+	return dev.getUUID().compare(this->uuid) == 0 && dev.getIP() == this->ip && dev.getName().compare(this->name) == 0;
 }
 //END Device
 
@@ -113,23 +113,23 @@ string DeviceGroup::getName() {
 }
 //END DeviceGroup
 
-Device byID(long id) {
-	if (devs_id.count(id) == 0) {//no device found
-		return Device(-1, "NULL", "NULL");//TODO throw custom exception?
+Device byUUID(string uuid) {
+	if (devs_id.count(uuid) == 0) {//no device found
+		return Device("NULL", "NULL", "NULL");//TODO throw custom exception?
 	}
-	return *devs_id[id];
+	return *devs_id[uuid];
 }
 
 Device byIP(string ip) {
 	if (devs_ip.count(ip) == 0) {//no device found
-		return Device(-1, "NULL", "NULL");
+		return Device("NULL", "NULL", "NULL");
 	}
 	return *devs_ip[ip];
 }
 
 Device byName(string name) {
 	if (devs_n.count(name) == 0) {//no device found
-		return Device(-1, "NULL", "NULL");
+		return Device("NULL", "NULL", "NULL");
 	}
 	return *devs_n[name];
 }
@@ -152,12 +152,13 @@ bool legalChars(string name, string legal) {
 
 bool isValidName(string name) {
 	string legal = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 ";
-	return isProperLength(name) && legalChars(name, legal) && name != "NULL" && byName(name).getID() != -1;//valid name
+	return isProperLength(name) && legalChars(name, legal) && name.compare("NULL") != 0 && byName(name).getUUID().compare("NULL") != 0;//valid name
 }
 
 bool isValidGroupName(string name) {
 	string legal = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 ";
-	return isProperLength(name) && legalChars(name, legal) && name != "NULL" && byGroupName(name).getName() != "NULL";//valid name
+	return isProperLength(name) && legalChars(name, legal) && name.compare("NULL") != 0 && byGroupName(name).getName().compare("NULL") != 0;
+	//valid name
 }
 
 bool isValidVersion(string vers) {
@@ -234,7 +235,7 @@ bool loadFile(string filename) {
 	
 	DeviceGroup* grp;
 	
-	long id;
+	string uuid;
 	int level;
 	string ip, name, f_vers, h_vers;
 	
@@ -246,14 +247,14 @@ bool loadFile(string filename) {
 			
 			vector<string> data = split(line, delim);
 			
-			id = atol(trim(data[0]).c_str());
+			uuid = trim(data[0]);
 			ip = trim(data[1]);
 			name = trim(data[2]);
 			level = atoi(trim(data[3]).c_str());
 			f_vers = trim(data[4]);
 			h_vers = trim(line.substr(line.rfind(delim) + 1));
 			
-			Device* dev = new Device(id, ip, name);
+			Device* dev = new Device(uuid, ip, name);
 			
 			dev->setLightLevel(level);
 			dev->set_f_vers(f_vers);

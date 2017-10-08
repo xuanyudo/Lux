@@ -12,9 +12,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "../utils/JSON/json.h"
 #include "devman/devman.h"
-#include "../utils/encode.h"
-#include "../utils/Parser.h"
 
 #define PORT 8080
 #define LISTEN_QUEUE_SIZE 5
@@ -24,7 +23,7 @@
 using namespace std;
 
 typedef void cmd_func(int client_fd, string message);
-typedef map<string, cmd_func*> cmd_map;
+typedef map<int, cmd_func*> cmd_map;
 
 extern cmd_map server_commands;//add/remove from this to change the server response to specific commands
 
@@ -32,10 +31,10 @@ void server_start();//starts the server, allowing clients to be connected
 int server_connections();//# of connections to this server
 
 //-1 if not found
-long client_uuid_by_fd(int fd);
-int client_fd_by_uuid(long uuid);
+int client_fd_by_uuid(string uuid);
 int client_fd_by_ip(string ip);
 
+string client_uuid_by_fd(int fd);
 string client_ip_by_fd(int fd);//empty string if not found
 
 void server_send(int client_fd, string message);//sends the message to the client at client_fd

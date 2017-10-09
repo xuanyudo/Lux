@@ -8,7 +8,7 @@ Json::Json(int icmd, std::string iuuid, std::string iserial){
 
 	switch(cmd){
 		case REGISTER:
-			data["auth_key"]="";
+			data["reg_key"]="";
 			data["hardware_version"]="";
 			data["firmware_version"]="";
 			break;

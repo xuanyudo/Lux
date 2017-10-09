@@ -34,8 +34,9 @@ int server_connections();//# of connections to this server
 int client_fd_by_uuid(string uuid);
 int client_fd_by_ip(string ip);
 
+//"" if not found
 string client_uuid_by_fd(int fd);
-string client_ip_by_fd(int fd);//empty string if not found
+string client_ip_by_fd(int fd);
 
 void server_send(int client_fd, string message);//sends the message to the client at client_fd
 

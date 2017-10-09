@@ -1,3 +1,6 @@
+#ifndef LUX_JSON_H
+#define LUX_JSON_H
+
 #define REGISTER 0
 #define CONNECT 1
 #define STATUS_REQUEST 2
@@ -9,6 +12,7 @@
 #define UNREGISTER 8
 #define FORCE_DISCONNECT 9
 #define TEST 10
+#define REG_REQUEST 11
 
 #include <stdio.h>
 #include <algorithm>
@@ -29,3 +33,5 @@ class Json{
 		std::string jsonify();
 
 };
+
+#endif

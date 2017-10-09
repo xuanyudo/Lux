@@ -4,32 +4,27 @@
 
 //BEGIN EXTERNAL DEFINITIONS
 map<string, DeviceGroup*> grps_n;
-map<string, Device*> devs_id;
 map<string, Device*> devs_ip;
-map<string, Device*> devs_n;
+map<string, Device*> devs_s;
 //END EXTERNAL DEFINITIONS
 
 char delim = '|';
 
 //BEGIN Device
-Device::Device(string uuid, string ip, string name) {
-	this->uuid = uuid;
+Device::Device(string ip, string name, string serial) {
 	this->ip = ip;
 	this->name = name;
+	this->serial = serial;
 	
 	f_vers = "UNKNOWN";
 	h_vers = "UNKNOWN";
 	
-	devs_id.insert(pair<string, Device*>(this->uuid, this));
 	devs_ip.insert(pair<string, Device*>(this->ip, this));
-	devs_n.insert(pair<string, Device*>(this->name, this));
+	devs_s.insert(pair<string, Device*>(this->serial, this));
 }
 
 Device::~Device(){}
 
-string Device::getUUID() const {
-	return uuid;
-}
 
 string Device::getIP() const {
 	return ip;
@@ -37,6 +32,14 @@ string Device::getIP() const {
 
 string Device::getName() const {
 	return name;
+}
+
+void Device::setName(string name) {
+	this->name = name;
+}
+
+string Device::getSerial() const {
+	return serial;
 }
 
 int Device::getLightLevel() const {
@@ -64,11 +67,11 @@ void Device::set_h_vers(string h_vers) {
 }
 
 string Device::toString() {
-	return uuid + delim + ip + delim + name + delim + to_string(level) + delim + f_vers + delim + h_vers;
+	return ip + delim + name + delim + serial + delim + to_string(level) + delim + f_vers + delim + h_vers;
 }
 
 bool Device::operator ==(const Device dev) const {
-	return dev.getUUID().compare(this->uuid) == 0 && dev.getIP() == this->ip && dev.getName().compare(this->name) == 0;
+	return dev.getSerial().compare(this->serial) == 0;
 }
 //END Device
 
@@ -113,25 +116,18 @@ string DeviceGroup::getName() {
 }
 //END DeviceGroup
 
-Device byUUID(string uuid) {
-	if (devs_id.count(uuid) == 0) {//no device found
-		return Device("NULL", "NULL", "NULL");//TODO throw custom exception?
-	}
-	return *devs_id[uuid];
-}
-
-Device byIP(string ip) {
+Device* byIP(string ip) {
 	if (devs_ip.count(ip) == 0) {//no device found
-		return Device("NULL", "NULL", "NULL");
+		return new Device("NULL", "NULL", "NULL");
 	}
-	return *devs_ip[ip];
+	return devs_ip[ip];
 }
 
-Device byName(string name) {
-	if (devs_n.count(name) == 0) {//no device found
-		return Device("NULL", "NULL", "NULL");
+Device* bySerial(string serial) {
+	if (devs_s.count(serial) == 0) {//no device found
+		return new Device("NULL", "NULL", "NULL");
 	}
-	return *devs_n[name];
+	return devs_s[serial];
 }
 
 //BEGIN UTILITY FUNCTIONS
@@ -152,12 +148,12 @@ bool legalChars(string name, string legal) {
 
 bool isValidName(string name) {
 	string legal = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 ";
-	return isProperLength(name) && legalChars(name, legal) && name.compare("NULL") != 0 && byName(name).getUUID().compare("NULL") != 0;//valid name
+	return isProperLength(name) && legalChars(name, legal) && name.compare("NULL") != 0;//valid name
 }
 
 bool isValidGroupName(string name) {
 	string legal = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 ";
-	return isProperLength(name) && legalChars(name, legal) && name.compare("NULL") != 0 && byGroupName(name).getName().compare("NULL") != 0;
+	return isProperLength(name) && legalChars(name, legal) && name.compare("NULL") != 0;
 	//valid name
 }
 
@@ -235,9 +231,8 @@ bool loadFile(string filename) {
 	
 	DeviceGroup* grp;
 	
-	string uuid;
 	int level;
-	string ip, name, f_vers, h_vers;
+	string ip, name, serial, f_vers, h_vers;
 	
 	while(getline(file, line)) {
 		if (line[0] == '\t') {//device
@@ -247,14 +242,14 @@ bool loadFile(string filename) {
 			
 			vector<string> data = split(line, delim);
 			
-			uuid = trim(data[0]);
-			ip = trim(data[1]);
-			name = trim(data[2]);
+			ip = trim(data[0]);
+			name = trim(data[1]);
+			serial = trim(data[2]);
 			level = atoi(trim(data[3]).c_str());
 			f_vers = trim(data[4]);
 			h_vers = trim(line.substr(line.rfind(delim) + 1));
 			
-			Device* dev = new Device(uuid, ip, name);
+			Device* dev = new Device(ip, name, serial);
 			
 			dev->setLightLevel(level);
 			dev->set_f_vers(f_vers);
@@ -265,4 +260,6 @@ bool loadFile(string filename) {
 			grp = new DeviceGroup(trim(line.substr(0, line.find("("))));
 		}
 	}
+	
+	return true;
 }

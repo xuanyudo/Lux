@@ -16,29 +16,26 @@ int main(int argc, char* argv[]) {
 	
 	cout << "Input enabled, searching for connections..." << endl;
 	
-	bool has_connected = false;
-	bool connected = false;
+	while(server_connections() == 0) {
+		//do nothing
+	}
+	
+	cout << "Connection found." << endl;
 	
 	while(true) {
 		string s;
 		cin >> s;
 		
-		connected = server_connections() != 0;
-		
-		if (connected) {
-			if (!has_connected) {
-				cout << "Connection found." << endl;
-				has_connected = true;
-			}
-			server_send(4, s);//first connection is always fd=4
-		}
+		server_send(4, s);//first connection is always fd=4
 		
 		if (s.compare("exit") == 0) {
 			break;
 		}
 	}
 	
-	cout << "Terminated." << endl;
+	while(true) {
+		//do nothing
+	}
 	
 	return 0;
 }

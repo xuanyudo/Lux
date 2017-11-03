@@ -67,7 +67,8 @@ def update_req():
         send(msg)
         
         resp = read().decode('utf-8')
-    return resp#render_template('dashboard.html')
+        print("[WebServer] Update Request Resonse: " + resp)
+    return resp #render_template('dashboard.html')
 
 @app.route('/unregister', methods=['POST'])
 def unregister():
@@ -118,4 +119,5 @@ def read():
     #dict = json.loads(msg.decode("utf-8"))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    #app.run(debug=True)
+    app.run(host="0.0.0.0", port=80)

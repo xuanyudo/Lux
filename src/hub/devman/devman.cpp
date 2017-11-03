@@ -263,3 +263,12 @@ bool loadFile(string filename) {
 	
 	return true;
 }
+
+bool clearFile(string filename){
+	ifstream file(filename, ios::out|ios::trunc);
+	if(!file.is_open()){
+		return false;
+	}
+	file.close();
+	return true;
+}

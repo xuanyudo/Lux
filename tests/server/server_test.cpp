@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 	
 	server_start();
 	
-	cout << "Input enabled, searching for connections..." << endl;
+	//cout << "Input enabled, searching for connections..." << endl;
 	
 	while(server_connections() == 0) {
 		//do nothing

@@ -54,6 +54,7 @@ void server_start() {
 	server_commands[UPDATE_REQUEST] = client_upd_req;
 	server_commands[STATUS_REQUEST] = client_status_req;
 	
+	clearFile(DATA_FILE);
 	loadFile(DATA_FILE);
 	
 	//TODO print server IP on startup
@@ -173,13 +174,13 @@ void server_send(int c_fd, string msg) {
 	This allows for a message of MESSAGE_SIZE - 1 (for null term) to be sent each time, meaning more bytes are sent,
 	but there is no possibility that calling send() twice in rapid succession will concatenate messages in the buffer.
 	*/
-	
+
 	char* a = new char[MESSAGE_SIZE + 1];
 	memcpy(a, msg.c_str(), MESSAGE_SIZE);
 	a[MESSAGE_SIZE] = 0;
-    
-    cout << "[->" << c_fd << "]" << msg << endl;
-    
+
+	cout << "[->" << c_fd << "]" << msg << endl;
+
 	if (send(c_fd, a, MESSAGE_SIZE, 0) == -1) {
 		cerr << "Failed to send data to client " << c_fd << "." << endl;
 		return;

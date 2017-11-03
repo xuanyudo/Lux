@@ -64,4 +64,6 @@ void updateFile(string);//must be called to update the devices file with current
 
 bool loadFile(string);
 
+bool clearFile(string);
+
 #endif //LUX_DEVMAN_H

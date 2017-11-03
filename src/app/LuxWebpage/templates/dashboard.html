@@ -6,14 +6,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
-    <meta name="author" content="">
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <meta name="author" content="Lux Team">
+	<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">-->
 
 	<!-- Bootstrap core CSS -->
     <link href="{{url_for('static', filename = 'bootstrap-4.0.0-beta/dist/css/bootstrap.min.css') }}" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <!-- <link href="{{url_for('static', filename = 'jumbotron.css') }}" rel="stylesheet"> -->
+    <link href="{{url_for('static', filename = 'dash.css') }}" rel="stylesheet">
   </head>
 
   <body onload = "loading_page()">
@@ -85,7 +85,7 @@
     </div><!-- /.container -->
 		<script>
 		var request_for_page = {"cmd": "2"};
-        var deviceState = {};
+        	var deviceState = {};
         
 		function loading_page() {
 			sendRequest(true, request_for_page, "/status_req");
@@ -128,87 +128,106 @@
 
 				var deviceID = myDevices[x].serial;
                 
-                //alert(deviceID);
+                		//alert(deviceID);
                 
 				//var deviceName = myDevices[x].Device;
 				deviceState[deviceID] = myDevices[x].data.level;
                 
-                //alert(deviceState[deviceID]);
+                		//alert(deviceState[deviceID]);
                 
 				var device_img = checkOnOrOffState(deviceState[deviceID]);
-                var device = document.createElement("div");
-                var deviceName = document.createElement("h5");
-                var stateSlider = document.createElement('div');
-                var on = document.createElement("p");
-                var off = document.createElement("p");
+                		var device = document.createElement("div");
+                		var deviceName = document.createElement("h5");
+				
+				var stateSliderContainer = document.createElement("div");
+				var stateSlider = document.createElement("label");
+				var state_of_slider = document.createElement("input");
+				var span_slider = document.createElement("span");
 
-                stateSlider.style.display = "inline-block";
-                stateSlider.id = "slider";
-                on.style.backgroundColor = "rgb(0,255,0)";
-                on.innerHTML = "ON";
-                off.innerHTML = "OFF";
-                on.style.float = "left";
-                off.style.float = "right";
-                off.style.backgroundColor = "rgb(255,0,0)";
-                stateSlider.appendChild(on);
-                stateSlider.appendChild(off);
+				stateSliderContainer.style.display = "inline-block";
+				stateSlider.id = "slider";
+				stateSlider.className = "switch";
+				state_of_slider.type = "checkbox";
+				span_slider.className = "slider round";
 
-                deviceName.innerHTML= myDevices[x].data.name;
-                deviceName.style.textAlign ="center";
-                device.className = "device";
-                device.style.width = "122px";
-                device.id = deviceID;
+				stateSlider.appendChild(state_of_slider);
+				stateSlider.appendChild(span_slider);
+				stateSliderContainer.appendChild(stateSlider);
+                		/*
+				var stateSlider = document.createElement("div");
+                		var on = document.createElement("p");
+                		var off = document.createElement("p");
 
-                device.appendChild(device_img);
-                device.appendChild(deviceName);
-                device.appendChild(stateSlider);
-                stateSlider.addEventListener("click",onState(myDevices[x].data.name, deviceID));
-                mylist.appendChild(device);
+                		stateSlider.style.display = "inline-block";
+                		stateSlider.id = "slider";
+                		on.style.backgroundColor = "rgb(0,255,0)";
+                		on.innerHTML = "ON";
+                		off.innerHTML = "OFF";
+                		on.style.float = "left";
+                		off.style.float = "right";
+                		off.style.backgroundColor = "rgb(255,0,0)";
+                		stateSlider.appendChild(on);
+                		stateSlider.appendChild(off);
+				*/
+                
+				deviceName.innerHTML= myDevices[x].data.name;
+                		deviceName.style.textAlign ="center";
+                		device.className = "device";
+                		device.style.width = "122px";
+                		device.id = deviceID;
+
+               			device.appendChild(device_img);
+                		device.appendChild(deviceName);
+                		device.appendChild(stateSliderContainer);
+                		/*stateSlider.addEventListener("click",onState(myDevices[x].data.name, deviceID));*/
+				span_slider.addEventListener("click", onState(myDevices[x].data.name, deviceID));
+                		mylist.appendChild(device);
 			}
 
 			document.getElementById("user_devices").appendChild(mylist);
 
 			//var count = 0;
-            //document.addEventListener('click',onState(myDevices[temp[0]].Device,myDevices[temp[0]].serial));
+            		//document.addEventListener('click',onState(myDevices[temp[0]].Device,myDevices[temp[0]].serial));
 		}
 
 		function checkOnOrOffState(deviceState) {
 			if (deviceState == 10) {
-                var image = document.createElement('img');
-                image.src = "{{url_for('static', filename = 'images/lighton.jpg') }}";
-                image.className = "Device_img";
-                image.width = "122";
-                image.height = "180";
-                image.display = "block";
-                image.margin = "auto";
+                		var image = document.createElement('img');
+                		image.src = "{{url_for('static', filename = 'images/lighton.jpg') }}";
+                		image.className = "Device_img";
+                		image.width = "122";
+                		image.height = "180";
+                		image.display = "block";
+                		image.margin = "auto";
 				return image;
 			}
 			else if (deviceState == 0) {
-                var image = document.createElement('img');
-                image.src = "{{url_for('static', filename = 'images/lightoff.jpg') }}";
-                image.className = "Device_img";
-                image.width = "122";
-                image.height = "180";
-                image.display = "block";
-                image.margin = "auto";
-                return image;
+                		var image = document.createElement('img');
+                		image.src = "{{url_for('static', filename = 'images/lightoff.jpg') }}";
+                		image.className = "Device_img";
+                		image.width = "122";
+                		image.height = "180";
+                		image.display = "block";
+                		image.margin = "auto";
+                		return image;
 			}
 		}
         
 		function onState(deviceName, deviceID) {
-            return function(){
-                if(deviceState[deviceID]==0) {
-                    var data = {"cmd":"4", "uuid":"0", "serial": deviceID, "data":{"name": deviceName, "level": 10}};
-                    // alert("ON");
-                    //deviceState[deviceID]=10;
-                    sendRequest(false, data, "/update_req");
-                } else if (deviceState[deviceID]==10) {
-                    var data = {"cmd":"4", "uuid":"0", "serial": deviceID, "data":{"name": deviceName, "level": 0}};
-                    // alert("OFF");
-                    //deviceState[deviceID]=0;
-                    sendRequest(false, data, "/update_req");
-                }
-            }
+            		return function(){
+                		if(deviceState[deviceID]==0) {
+                    			var data = {"cmd":"4", "uuid":"0", "serial": deviceID, "data":{"name": deviceName, "level": 10}};
+                    			// alert("ON");
+                    			//deviceState[deviceID]=10;
+                    			sendRequest(false, data, "/update_req");
+                		}
+				else if (deviceState[deviceID]==10) {
+                    			var data = {"cmd":"4", "uuid":"0", "serial": deviceID, "data":{"name": deviceName, "level": 0}};
+                    			// alert("OFF");
+                    			//deviceState[deviceID]=0;
+                    			sendRequest(false, data, "/update_req");
+                		}
+            		}
 		}
 
 
@@ -284,7 +303,8 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <!--<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>-->
+    <script src="{{url_for('static', filename = 'jquery-3.2.1.slim.min.js') }}"></script>
     <script>window.jQuery || document.write('<script src="../../../../assets/js/vendor/jquery.min.js"><\//script>')</script>
     <script src="{{url_for('static', filename = 'bootstrap-4.0.0-beta/assets/js/vendor/popper.min.js') }}"></script>
     <script src="{{url_for('static', filename = 'bootstrap-4.0.0-beta/dist/js/bootstrap.min.js') }}"></script>

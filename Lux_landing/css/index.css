@@ -1,0 +1,84 @@
+#top-banner {
+    background: linear-gradient(to right, #ffd355, #dafcff, #ff7231);
+    padding: 150px 50px;
+}
+
+.line-b {
+    height: 2px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 40%, blue 50%, rgba(255, 255, 255, 0) 60%);
+}
+
+.line-top {
+    height: 2px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 45%, blue 50%, rgba(255, 255, 255, 0) 55%);
+}
+
+.p-50 {
+    padding: 50px;
+}
+
+.p-150 {
+    padding: 0 150px;
+}
+
+.mini-icon {
+    width: 50px;
+}
+
+.enhanced {
+    font-size: 350%;
+}
+
+footer {
+    position: relative;
+    color: white;
+    background-color: #464a4e;
+}
+
+#About {
+    background-color: rgba(229, 255, 0, 0.6);
+    padding-bottom: 30px;
+}
+
+.f-icon {
+    color: #FF5722;
+    padding: 20px;
+
+}
+
+#feature {
+    background-color: #00BCD4;
+    color: white;
+    padding-bottom: 30px;
+}
+
+.p-image {
+    width: 200px;
+    height: 200px;
+    border: 3px solid white;
+}
+
+#team {
+    color: white;
+    background-image: url("../images/wall.jpg");
+    padding-bottom: 30px;
+}
+
+#Lux-progress {
+    padding-bottom: 30px;
+}
+
+.slide_image {
+    opacity: 0.5;
+
+}
+.slide_image:hover{
+    border:2px solid red;
+    opacity: 0.8;
+}
+
+.carousel-item img {
+   position: relative;
+    width:70%;
+    left:15%;
+}
